@@ -33,6 +33,13 @@ class Squiz_Sniffs_Commenting_FunctionCommentSniff extends PEAR_Sniffs_Commentin
 {
 
     /**
+     * Allow aliases of data types.
+     *
+     * @var boolean
+     */
+    public $allowDataTypeAliases = false;
+
+    /**
      * The current PHP version.
      *
      * @var integer
@@ -92,7 +99,7 @@ class Squiz_Sniffs_Commenting_FunctionCommentSniff extends PEAR_Sniffs_Commentin
                 }
 
                 $suggestedType = implode('|', $suggestedNames);
-                if ($content !== $suggestedType) {
+                if ($this->checkDataType($content, $suggestedType) === false) {
                     $error = 'Expected "%s" but found "%s" for function return type';
                     $data  = array(
                               $suggestedType,
@@ -347,8 +354,9 @@ class Squiz_Sniffs_Commenting_FunctionCommentSniff extends PEAR_Sniffs_Commentin
                         );
         }//end foreach
 
-        $realParams  = $phpcsFile->getMethodParameters($stackPtr);
-        $foundParams = array();
+        $realParams   = $phpcsFile->getMethodParameters($stackPtr);
+        $foundParams  = array();
+        $allowedTypes = $this->getAllowedDataTypes();
 
         // We want to use ... for all variable length arguments, so added
         // this prefix to the variable name so comparisons are easier.
@@ -368,7 +376,7 @@ class Squiz_Sniffs_Commenting_FunctionCommentSniff extends PEAR_Sniffs_Commentin
             $typeNames = explode('|', $param['type']);
             foreach ($typeNames as $typeName) {
                 $suggestedName = PHP_CodeSniffer::suggestType($typeName);
-                if ($typeName !== $suggestedName) {
+                if ($this->checkDataType($typeName, $suggestedName) === false) {
                     $error = 'Expected "%s" but found "%s" for parameter type';
                     $data  = array(
                               $suggestedName,
@@ -396,7 +404,7 @@ class Squiz_Sniffs_Commenting_FunctionCommentSniff extends PEAR_Sniffs_Commentin
                         $suggestedTypeHint = 'callable';
                     } else if (strpos($suggestedName, 'callback') !== false) {
                         $suggestedTypeHint = 'callable';
-                    } else if (in_array($typeName, PHP_CodeSniffer::$allowedTypes) === false) {
+                    } else if (in_array($typeName, $allowedTypes) === false) {
                         $suggestedTypeHint = $suggestedName;
                     } else if ($this->_phpVersion >= 70000) {
                         if ($typeName === 'string') {
@@ -521,6 +529,63 @@ class Squiz_Sniffs_Commenting_FunctionCommentSniff extends PEAR_Sniffs_Commentin
         }
 
     }//end processParams()
+
+
+    /**
+     * Check if the given data type is correct.
+     *
+     * @param string  $found        The data type.
+     * @param string  $suggested    The suggested data type.
+     * @param boolean $allowAliases The flag whether to allow aliases.
+     *
+     * @return boolean
+     */
+    protected function checkDataType($found, $suggested, $allowAliases = null)
+    {
+        if ($found === $suggested) {
+            return true;
+        }
+
+        // Use config option if not passed explicitly.
+        if ($allowAliases === null) {
+            $allowAliases = $this->allowDataTypeAliases;
+        }
+
+        if ($allowAliases === true) {
+            // If we do not get a match, we try again with the aliases. The recursion will
+            // terminate after the second call, because we pass false as third parameter.
+            $suggestions = array(
+                            str_replace('integer', 'int', $suggested),
+                            str_replace('boolean', 'bool', $suggested),
+                            str_replace(['integer', 'boolean'], ['int', 'bool'], $suggested),
+                           );
+            foreach ($suggestions as $suggestion) {
+                if ($this->checkDataType($found, $suggestion, false) === true) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+
+    }//end checkDataType()
+
+
+    /**
+     * Returns the allowed data types.
+     *
+     * @return array
+     */
+    protected function getAllowedDataTypes()
+    {
+        $types = PHP_CodeSniffer::$allowedTypes;
+        if ($this->allowDataTypeAliases === true) {
+            array_push($types, 'int', 'bool');
+        }
+
+        return $types;
+
+    }//end getAllowedDataTypes()
 
 
     /**

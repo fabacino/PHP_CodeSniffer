@@ -821,3 +821,83 @@ public function someFunc(): void
         }
     };
 }
+
+/**
+ * No errors expected here.
+ *
+ * @return integer|boolean
+ */
+public function myFunction()
+{
+    return $this->var;
+}
+
+/**
+ * Both int and bool are not allowed.
+ *
+ * @return int|bool
+ */
+public function myFunction()
+{
+    return $this->var;
+}
+
+/**
+ * int is not allowed, boolean should be fine.
+ *
+ * @return int|boolean
+ */
+public function myFunction()
+{
+    return $this->var;
+}
+
+/**
+ * bool is not allowed, integer should be fine.
+ *
+ * @return integer|bool
+ */
+public function myFunction()
+{
+    return $this->var;
+}
+
+/**
+ * No errors expected here.
+ *
+ * @return integer|string|boolean
+ */
+public function myFunction()
+{
+    return $this->var;
+}
+
+/**
+ * int and bool are not allowed, array should be fine.
+ *
+ * @return array|int|bool
+ */
+public function myFunction()
+{
+    return $this->var;
+}
+
+/**
+ * int is not allowed, the others should be fine.
+ *
+ * @return MyClass|int|boolean
+ */
+public function myFunction()
+{
+    return $this->var;
+}
+
+/**
+ * bool is not allowed, the others should be fine.
+ *
+ * @return integer|bool|float
+ */
+public function myFunction()
+{
+    return $this->var;
+}

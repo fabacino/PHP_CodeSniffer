@@ -116,6 +116,12 @@ class Squiz_Tests_Commenting_FunctionCommentUnitTest extends AbstractSniffUnitTe
                    794 => 1,
                    797 => 1,
                    801 => 1,
+                   838 => 1,
+                   848 => 1,
+                   858 => 1,
+                   878 => 1,
+                   888 => 1,
+                   898 => 1,
                   );
 
         // The yield tests will only work in PHP versions where yield exists and
